@@ -10,7 +10,7 @@ import about
 # ------------------------------------------------------------------------------
 metadata = about.get_metadata("about/__about__.py")
 
-contents = dict(packages=["about"], zip_safe=True}
+contents = dict(packages=["about"], zip_safe=True)
 
 requirements = {}
 
