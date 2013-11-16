@@ -2,6 +2,9 @@
 # Python 2.7 Standard Library
 import re
 
+# Metadata
+from .__about__ import *
+
 def get_metadata(filename):
     """
     Return metadata for setuptools `setup`.
