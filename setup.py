@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 
 # Python 2.7 Standard Library
-pass
-
+import os
 # Third-Party Libraries
 import setuptools
 import about
 
-# ------------------------------------------------------------------------------
-metadata = about.get_metadata("about/__about__.py")
 
-contents = dict(packages=["about"], zip_safe=True)
-
+metadata = about.get_metadata("about", path=os.getcwd())
+contents = dict(py_modules=["about"], zip_safe=True)
 requirements = {}
 
-# ------------------------------------------------------------------------------
 info = {}
 info.update(contents)
 info.update(metadata)
 info.update(requirements)
 
-setuptools.setup(**info)
+if __name__ == "__main__":
+    setuptools.setup(**info)
 

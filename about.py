@@ -1,16 +1,25 @@
+# coding: utf-8
+"""
+About - Metadata for Setuptools
+"""
 
 # Python 2.7 Standard Library
 import importlib
+import os
 import re
 import sys
 
 # Metadata
-from .__about__ import *
+__project__ = "about"
+__author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
+__version__ = "0.1.0-alpha.1"
+__license__ = "MIT License"
 
 # TODO:
 #
 #   - think of distribution of about. Should it be embedable into every project
-#     for simplicity ? in a "utils" directory for example ? 
+#     for simplicity ? in a "utils" directory for example ? Or even in the
+#     top-level ?
 #
 #   - use cases:
 #
@@ -49,10 +58,12 @@ def get_metadata(name, path=None):
     """
 
     if path is not None:
-        sys.path.insert(0, path)
-    metadata = importlib.import_module(name).__dict__
+        path = os.getcwd()
+    sys.path.insert(0, path)
+    about_data = importlib.import_module(name).__dict__
     if path is not None:
         del sys.path[0]
+    metadata = {}
 
     # read the relevant __*__ module attributes
     for name in "project author version license doc url classifiers".split():
@@ -60,7 +71,7 @@ def get_metadata(name, path=None):
         if value is not None:
             metadata[name] = value
 
-    # get the project name
+    # get the project name indexed by the "name" key instead of "project"
     project = metadata.get("project")
     if project is not None:
         metadata["name"] = project
