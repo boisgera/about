@@ -12,7 +12,7 @@ import sys
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.1-alpha.1"
+__version__ = "0.1.2-alpha.1"
 __license__ = "MIT License"
 
 
@@ -21,7 +21,7 @@ def get_metadata(name, path=None):
     Return metadata for setuptools `setup`.
     """
 
-    if path is not None:
+    if path is None:
         path = os.getcwd()
     sys.path.insert(0, path)
     about_data = importlib.import_module(name).__dict__
