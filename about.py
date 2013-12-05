@@ -12,46 +12,10 @@ import sys
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.0-alpha.1"
+__version__ = "0.1.1-alpha.1"
 __license__ = "MIT License"
 
-# TODO:
-#
-#   - think of distribution of about. Should it be embedable into every project
-#     for simplicity ? in a "utils" directory for example ? Or even in the
-#     top-level ?
-#
-#   - use cases:
-#
-#       - The project is Pure Python with no dependency beyond the standard library.
-#         The metadata can be embedded into the main module which can be imopted and
-#         introspected. In this case, exec is optional, but is there any pb in
-#         keeping it ? "__name__" is not going to get added automatically, it has
-#         to be set manually into the source file. That's about it ? Manually
-#         setting it can be a problem, for example if the module is also an 
-#         executable. So it should not be done ...
-#         Make the user set the name explicitely. Arf that sucks. The other option
-#         is to define __name__ in a fallback clause ... Nah, won't work, in an
-#         exec, __name__ would be defined (as __builtin__). We could argue that
-#         we are talking project name, not module/script name and go for another
-#         name than __name__ ? That's probably the right thing to do.
-#      
-#       - Pure Python project with dependencies. Make a package out of it and
-#         have an __about__.py file at the top-level, that is without dependency
-#         this file is exec'd in setup.py and its contents imported in the module.
-#         We HAVE to do that: in setup.py, we can't import unless the top-level
-#         package does not have extra dependcy, and in the module, once deployed,
-#         we rely on the module import machinery to file the file ...
-#         WAIT. We could always rely on import, if we set the path to the top-level
-#         package and import from there. It bypasses the package __init__.py.
-#         Yes, that should always work ... 
-#
-#         Apart from the __name__ issue, that means that for the import to work,
-#         the __*__ field have to be set in __all__ for the "import *" to work.
-#         This is not mandatory of course, this stuff can be imported explicitely
-#         one by one. 
 
-# TODO: signature to (module/package) name, path ?
 def get_metadata(name, path=None):
     """
     Return metadata for setuptools `setup`.
@@ -101,4 +65,8 @@ def get_metadata(name, path=None):
 
     return metadata
 
-
+if __name__ == "__main__":
+    local = open("about.py", "w")
+    local.write(open(__file__).read())
+    local.close()
+    

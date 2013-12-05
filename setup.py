@@ -8,7 +8,7 @@ import about
 
 
 metadata = about.get_metadata("about", path=os.getcwd())
-contents = dict(py_modules=["about"], zip_safe=True)
+contents = dict(py_modules=["about"], zip_safe=False)
 requirements = {}
 
 info = {}
