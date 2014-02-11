@@ -5,6 +5,7 @@ About - Metadata for Setuptools
 
 # Python 2.7 Standard Library
 import importlib
+import inspect
 import os
 import re
 import sys
@@ -12,7 +13,7 @@ import sys
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.2-alpha.1"
+__version__ = "0.1.3"
 __license__ = "MIT License"
 
 
@@ -66,7 +67,8 @@ def get_metadata(name, path=None):
     return metadata
 
 if __name__ == "__main__":
+    import about
     local = open("about.py", "w")
-    local.write(open(__file__).read())
+    local.write(open(inspect.getsourcefile(about)).read())
     local.close()
     
