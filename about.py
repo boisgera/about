@@ -13,7 +13,7 @@ import sys
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __license__ = "MIT License"
 
 
@@ -31,7 +31,7 @@ def get_metadata(name, path=None):
     metadata = {}
 
     # read the relevant __*__ module attributes
-    for name in "project author version license doc url classifiers".split():
+    for name in "project name author version license doc url classifiers".split():
         value = about_data.get("__" + name + "__")
         if value is not None:
             metadata[name] = value
