@@ -13,7 +13,7 @@ import sys
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __license__ = "MIT License"
 
 
@@ -36,7 +36,7 @@ def get_metadata(name, path=None):
         if value is not None:
             metadata[name] = value
 
-    # get the project name indexed by the "name" key instead of "project"
+    # when 'project' is here, it overrides the (generated) 'name' attribute
     project = metadata.get("project")
     if project is not None:
         metadata["name"] = project
