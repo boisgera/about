@@ -10,10 +10,13 @@ import os
 import re
 import sys
 
+# Third-Party Libraries
+import setuptools
+
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.1.5"
+__version__ = "0.2.0"
 __license__ = "MIT License"
 
 
@@ -36,7 +39,7 @@ def get_metadata(name, path=None):
         if value is not None:
             metadata[name] = value
 
-    # when 'project' is here, it overrides the (generated) 'name' attribute
+    # when "project" is here, it overrides the (generated) "name" attribute
     project = metadata.get("project")
     if project is not None:
         metadata["name"] = project
@@ -65,6 +68,48 @@ def get_metadata(name, path=None):
         metadata["classifiers"] = classifiers
 
     return metadata
+
+def printer(line, stdin):
+    print line,
+
+class About(setuptools.Command):
+
+    description = "Display Project Metadata"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        metadata = self.distribution.metadata
+        # TODO: clean up unused fields, add some setuptools fields
+        #       (install requires, entry_points, etc.)
+        attrs = [
+            ("name", metadata.get_name()),
+            ("version", metadata.get_version()),
+            ("summary", metadata.get_description()),
+            ("home page", metadata.get_url()),
+            ("author", metadata.get_contact()),
+            ("author_email", metadata.get_contact_email()),
+            ("license", metadata.get_licence()),
+            ("description", metadata.get_long_description()),
+            ("keywords", metadata.get_keywords()),
+            ("platform", metadata.get_platforms()),
+            ("classifiers", metadata.get_classifiers()),
+            ("download url", metadata.get_download_url()),
+            # PEP 314
+            ("provides", metadata.get_provides()),
+            ("requires", metadata.get_requires()),
+            ("obsoletes", metadata.get_obsoletes()),
+        ]
+        print
+        for name, value in attrs:
+            print "  - " + name + ":", value
+        print
 
 if __name__ == "__main__":
     import about
