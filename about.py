@@ -16,7 +16,7 @@ import setuptools
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __license__ = "MIT License"
 
 
