@@ -16,8 +16,50 @@ import setuptools
 # Metadata
 __project__ = "about"
 __author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __license__ = "MIT License"
+
+
+# The `get_metadata` method mixes responsabilities here, the fact that it 
+# handles path issues is madness. The only argument should probably be a
+# module object, or maybe a dict. The only responsabilities of get_metadata 
+# is too "unmangle" the double underscores (with some cleanup, convergence
+# if needed, but really) and to transform the values when the metadata 
+# name is known.
+
+# Q: should I try to get all double underscore names (maybe exclude some
+#    of the generated such as __file__) ? And transform the values only
+#    of the ones I know ? And provide some "hooks" to transform new
+#    variables ? I don't know if it makes sense. Remember that the
+#    metadata are used to fill the setup function arguments, no less, 
+#    no more ... So the answer is no, stick to what we do expect.
+#    Should I be more explicit about that and call the function
+#    GET_SETUP_KWARGS or something ?
+
+# Can we really confuse the module/package name and the project name ?
+# It can still be overloaded after the metadata request, but still ...
+# Yeah, it's pretty standard.
+
+# To summarize the purpose of about:
+#
+#   - provide setup.py with metadata that is already declared: 
+#     get rid of the metadata duplication
+#     
+#   - metadata should be accessible "as usual" from the "__" symbols 
+#     in the module, without about being a dependency of this process.
+#
+#   - provide a command-line tool to display the list of metadata that
+#     has been declared and what is missing ...
+#
+
+# Rk: as we have concluded that the metadata cannot in general live in the
+#     module source code, why not use a data file instead of a module ?
+#     Because it would make the insertion of the metadata harder in the
+#     module ? Yes, that's right ... We would require some helpers installed
+#     at runtime ... Unless we can rely on PEP345 supporting tools ?
+#
+
+
 
 
 def get_metadata(name, path=None):
@@ -32,6 +74,8 @@ def get_metadata(name, path=None):
     if path is not None:
         del sys.path[0]
     metadata = {}
+
+    # Q: accept "url" **OR** "home page" ?
 
     # read the relevant __*__ module attributes
     for name in "project name author version license doc url classifiers".split():
@@ -86,30 +130,68 @@ class About(setuptools.Command):
 
     def run(self):
         metadata = self.distribution.metadata
-        # TODO: clean up unused fields, add some setuptools fields
-        #       (install requires, entry_points, etc.)
+
         attrs = [
-            ("name", metadata.get_name()),
-            ("version", metadata.get_version()),
-            ("summary", metadata.get_description()),
-            ("home page", metadata.get_url()),
-            ("author", metadata.get_contact()),
-            ("author_email", metadata.get_contact_email()),
-            ("license", metadata.get_licence()),
-            ("description", metadata.get_long_description()),
-            ("keywords", metadata.get_keywords()),
-            ("platform", metadata.get_platforms()),
-            ("classifiers", metadata.get_classifiers()),
-            ("download url", metadata.get_download_url()),
-            # PEP 314
-            ("provides", metadata.get_provides()),
-            ("requires", metadata.get_requires()),
-            ("obsoletes", metadata.get_obsoletes()),
+            ("name"     , metadata.name       ),
+            ("version"  , metadata.version    ),
+            ("summary"  , metadata.description),
+            ("home page", metadata.url        ),
+            ("license"  , metadata.license    ),
         ]
+
+        author = metadata.author
+        maintainer = metadata.maintainer
+        if author:
+            attrs.extend([
+                ("author", metadata.author      ),
+                ("e-mail", metadata.author_email),
+            ])
+        if maintainer and maintainer != author:
+            attrs.extend([
+                ("maintainer", metadata.maintainer      ),
+                ("e-mail"    , metadata.maintainer_email),
+            ])
+
+        desc = metadata.long_description
+        if desc:
+           line_count = len(desc)
+           attrs.append(("description", "yes ({0} lines)".format(line_count)))
+        else:
+           attrs.append(("description", None))
+
+        attrs.extend([
+            ("classifiers" , metadata.classifiers     ),
+            ("platform"    , metadata.platforms       ),
+            ("download url", metadata.download_url    ),
+        ])
+
+        # I am ditching "keywords" but keeping "classifiers".
+        # (no one is declaring or using "keywords" AFAICT)
+        attrs.append(("classifiers", metadata.classifiers))
+
+        # Get the mandatory, runtime, declarative dependencies 
+        # (managed by setuptools).
+        attrs.append(("requires", self.distribution.install_requires))
+
         print
         for name, value in attrs:
-            print "  - " + name + ":", value
+            print "  - " + name + ":",
+            if isinstance(value, list):
+                print
+                for item in value:
+                  print "      - " + str(item)
+            elif isinstance(value, basestring):
+                lines = value.splitlines()
+                if len(lines) <= 1:
+                    print value
+                else:
+                    print
+                    for line in lines:
+                        print "      | " + line
+            else:
+                print "undefined"
         print
+
 
 if __name__ == "__main__":
     import about
