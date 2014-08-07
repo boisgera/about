@@ -82,6 +82,34 @@ metadata = dict(
 
 globals().update(metadata)
 
+# TODO
+# ------------------------------------------------------------------------------
+#
+# The pydoc convention assumed for the documentation does not fit the
+# Markdown model. Pydoc assumes some
+#
+#     Summary (one-liner)
+#
+#     Description
+#
+# structure and will generate a 
+#
+#     Title: Project Name (Version)
+#     Subtitle: Summary (one-liner)
+#
+# while markdown document would probably be structured as:
+#
+#     Title
+#     =========
+#
+#     Description
+#
+# So we need to get rid of the title decoration and maybe expect a title
+# like "Project: Summary" or "Project -- Summary", or that kind of things.
+# Don't do anything about the project name repetition, it's too complex and
+# no big deal, but do detect the possible markdown syntaxes for title and
+# remove that to produce the summary.
+
 
 def get_metadata(module):
     """
