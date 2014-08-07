@@ -29,7 +29,7 @@ metadata = dict(
     __doc__         = __doc__,
     __docformat__   = "markdown",
     __classifiers__ = ["Programming Language :: Python :: 2.7",
-                       "Topic :: Software Development ::",
+                       "Topic :: Software Development",
                        "License :: OSI Approved :: MIT License"]
   )
 
