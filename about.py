@@ -1,95 +1,82 @@
 # coding: utf-8
 """
 About - Metadata for Setuptools
+
+**TODO:** documentation.
 """
 
 # Python 2.7 Standard Library
 import importlib
 import inspect
 import os
+import pydoc
 import re
 import sys
 
 # Third-Party Libraries
+from path import path
 import setuptools
+import sh
 
 # Metadata
-__project__ = "about"
-__author__  = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>"
-__version__ = "0.3.0"
-__license__ = "MIT License"
+metadata = dict(
+    __name__        = __name__,
+    __appname__     = "about",
+    __version__     = "2.0.0",
+    __license__     = "MIT License",
+    __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
+    __url__         = "https://warehouse.python.org/project/about",
+    __doc__         = __doc__,
+    __docformat__   = "markdown",
+    __classifiers__ = ["Programming Language :: Python :: 2.7",
+                       "Topic :: Software Development ::",
+                       "License :: OSI Approved :: MIT License"]
+  )
+
+globals().update(metadata)
 
 
-# The `get_metadata` method mixes responsabilities here, the fact that it 
-# handles path issues is madness. The only argument should probably be a
-# module object, or maybe a dict. The only responsabilities of get_metadata 
-# is too "unmangle" the double underscores (with some cleanup, convergence
-# if needed, but really) and to transform the values when the metadata 
-# name is known.
-
-# Q: should I try to get all double underscore names (maybe exclude some
-#    of the generated such as __file__) ? And transform the values only
-#    of the ones I know ? And provide some "hooks" to transform new
-#    variables ? I don't know if it makes sense. Remember that the
-#    metadata are used to fill the setup function arguments, no less, 
-#    no more ... So the answer is no, stick to what we do expect.
-#    Should I be more explicit about that and call the function
-#    GET_SETUP_KWARGS or something ?
-
-# Can we really confuse the module/package name and the project name ?
-# It can still be overloaded after the metadata request, but still ...
-# Yeah, it's pretty standard.
-
-# To summarize the purpose of about:
-#
-#   - provide setup.py with metadata that is already declared: 
-#     get rid of the metadata duplication
-#     
-#   - metadata should be accessible "as usual" from the "__" symbols 
-#     in the module, without about being a dependency of this process.
-#
-#   - provide a command-line tool to display the list of metadata that
-#     has been declared and what is missing ...
-#
-
-# Rk: as we have concluded that the metadata cannot in general live in the
-#     module source code, why not use a data file instead of a module ?
-#     Because it would make the insertion of the metadata harder in the
-#     module ? Yes, that's right ... We would require some helpers installed
-#     at runtime ... Unless we can rely on PEP345 supporting tools ?
-#
-
-
-
-
-def get_metadata(name, path=None):
+def get_metadata(module):
     """
-    Return metadata for setuptools `setup`.
+    Get the metadata content from the module argument.
+
+    This function uses the following variables when they are defined:
+
+        __name__
+        __appname__
+        __version__
+        __license__
+        __author__
+        __url__
+        __doc__
+        __docformat__
+        __classifiers__
+
+    It returns a `metadata` dictionary that provides keywords arguments
+    for the setuptools `setup` function.
     """
 
-    if path is None:
-        path = os.getcwd()
-    sys.path.insert(0, path)
-    about_data = importlib.import_module(name).__dict__
-    if path is not None:
-        del sys.path[0]
+    about_data = module.__dict__
     metadata = {}
 
-    # Q: accept "url" **OR** "home page" ?
-
-    # read the relevant __*__ module attributes
-    for name in "project name author version license doc url classifiers".split():
-        value = about_data.get("__" + name + "__")
+    # Read the relevant __*__ module attributes.
+    names = """
+        __name__
+        __appname__
+        __version__
+        __license__
+        __author__
+        __url__
+        __doc__
+        __docformat__
+        __classifiers__
+    """
+    for name in names.split():
+        value = about_data.get(name)
         if value is not None:
-            metadata[name] = value
+            metadata[name[2:-2]] = value
 
-    # when "project" is here, it overrides the (generated) "name" attribute
-    project = metadata.get("project")
-    if project is not None:
-        metadata["name"] = project
-        del metadata["project"]
-
-    # search for author email with <...@...> syntax in the author field
+    # Search for author email with a <...@...> syntax in the author field.
     author = metadata.get("author")
     if author is not None:
         email_pattern = r"<([^>]+@[^>]+)>"
@@ -97,18 +84,49 @@ def get_metadata(name, path=None):
         if match is not None:
             metadata["author_email"] = email = match.groups()[0]
             metadata["author"] = author.replace("<" + email + ">", "").strip()
+        else:
+            metadata["author"] = author
 
-    # get the module short description from the docstring
+    # Get the module summary and description from the docstring.
+
+    # Process the doc format first (markdown is the default format)
     doc = metadata.get("doc")
     if doc is not None:
-        lines = [line for line in doc.splitlines() if line.strip()]
-        metadata["description"] = lines[0].strip()
-        del metadata["doc"]
+        docformat = metadata.get("docformat", "markdown").lower()
+        if "rest" in docformat or "restructuredtext" in docformat:
+            pass
+        elif "markdown" in docformat:
+            # Try to refresh the ReST documentation in 'doc/doc.rst'
+            try:
+                pandoc = sh.pandoc
+                try:
+                    sh.mkdir("doc")
+                except sh.ErrorReturnCode:
+                    pass
+                sh.pandoc("-o", "doc/doc.rst", _in=doc)            
+            except sh.CommandNotFound, sh.ErrorReturnCode:
+                warning = "warning: cannot generate the ReST documentation."
+                print >> sys.stderr, warning
+           # Fallback on the old 'doc/doc.rst' file if it exists.
+            try:
+                doc = path("doc/doc.rst").open().read()
+            except IOError, sh.ErrorReturnCode:
+                doc = None # there is nothing we can do at this stage.
+                warning = "warning: unable to use existing ReST documentation."
+                print >> sys.stderr, warning
+        else:
+             error = "the doc format should be 'markdown' or 'restructuredtext'."
+             raise ValueError(error)
+        if doc is not None:
+            # We assume that pydoc conventions are met: 
+            # the first line is the summary, it's followed by a blankline, 
+            # and then by the long description. 
+            metadata["description"], metadata["long_description"] = pydoc.splitdoc(doc)
 
-    # process trove classifiers
+    # Process trove classifiers.
     classifiers = metadata.get("classifiers")
     if classifiers and isinstance(classifiers, str):
-        classifiers = [l.strip() for l in classifiers.splitlines() if l.strip()]
+        classifiers = [c.strip() for c in classifiers.splitlines() if c.strip()]
         metadata["classifiers"] = classifiers
 
     return metadata
