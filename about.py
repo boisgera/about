@@ -2,11 +2,15 @@
 """
 About - Metadata for Setuptools
 
+Define the metadata of your project in a single place, then make it available
+in the setup and at runtime. The standard pattern, for a simple module 
+`myproject`, is to define an extra metadata module `about_myproject`:
+
     # about_myproject.py
     \"""
     My Project Summary
 
-    My Project Description
+    My Project Long Description
     \"""
 
     metadata = dict(
@@ -25,20 +29,16 @@ About - Metadata for Setuptools
     globals().update(metadata)
     __all__ = metadata.keys()
 
-In `myproject.py` just add the following metadata section
+Then, in `myproject.py`, you add a metadata section
 
     # Metadata
     from .about_myproject import *
 
-and in your `setup.py` files, use
+and finally, in your `setup.py` file, use the following code:
 
     import setuptools
-
     import about
-    import os
-    import path
-    sys.path.insert(0, os.getcwd())
-    import about_myproject # local version
+    import .about_myproject
 
     info = about.get_metadata(about_myproject)
 
@@ -67,7 +67,7 @@ import sh
 metadata = dict(
     __name__        = __name__,
     __appname__     = "about",
-    __version__     = "2.1.0",
+    __version__     = "2.2.0",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
