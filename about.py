@@ -3,7 +3,9 @@
 About - Metadata for Setuptools
 
 Define the metadata of your project in a single place, then make it available
-in the setup and at runtime. The standard pattern, for a simple module 
+in the setup and at runtime. 
+
+The standard pattern, for a simple module 
 `myproject`, is to define an extra metadata module `about_myproject`:
 
     # about_myproject.py
@@ -67,7 +69,7 @@ import sh
 metadata = dict(
     __name__        = __name__,
     __appname__     = "about",
-    __version__     = "2.2.0",
+    __version__     = "2.2.1",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
