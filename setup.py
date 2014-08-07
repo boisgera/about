@@ -13,9 +13,8 @@ except ImportError:
     raise ImportError(error)
 
 # Local Libraries
-sys.path.insert(0, os.getcwd())
-sys.path.insert(1, "lib")
-import about
+sys.path.insert(0, "lib")
+import .about
 
 metadata = about.get_metadata(about)
 contents = dict(py_modules=["about"], zip_safe=False)
