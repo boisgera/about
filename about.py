@@ -1,56 +1,5 @@
+#!/usr/bin/env python
 # coding: utf-8
-"""
-About - Metadata for Setuptools
-
-Define the metadata of your project in a single place, then make it available
-in the setup and at runtime. 
-
-The standard pattern, for a simple module 
-`myproject`, is to define an extra metadata module `about_myproject`:
-
-    # about_myproject.py
-    \"""
-    My Project Summary
-
-    My Project Long Description
-    \"""
-
-    metadata = dict(
-        __appname__     = "myproject",
-        __version__     = "1.0.0",
-        __license__     = "MIT License",
-        __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
-        __url__         = "https://warehouse.python.org/project/about",
-        __doc__         = __doc__,
-        __docformat__   = "markdown",
-        __classifiers__ = ["Programming Language :: Python :: 2.7",
-                           "Topic :: Software Development",
-                           "License :: OSI Approved :: MIT License"]
-      )
-
-    globals().update(metadata)
-    __all__ = metadata.keys()
-
-Then, in `myproject.py`, you add a metadata section
-
-    # Metadata
-    from .about_myproject import *
-
-and finally, in your `setup.py` file, use the following code:
-
-    import setuptools
-    import about
-    import .about_myproject
-
-    info = about.get_metadata(about_myproject)
-
-    # add extra information (contents, requirements, etc.) for the setup.
-    info.update(...)
-
-    if __name__ == "__main__":
-        setuptools.setup(**info)
-
-"""
 
 # Python 2.7 Standard Library
 import importlib
@@ -59,152 +8,116 @@ import os
 import pydoc
 import re
 import sys
+import types
 
 # Third-Party Libraries
 from path import path
+import pkg_resources
 import setuptools
 import sh
+try:
+    pandoc = sh.pandoc
+except sh.CommandNotFound:
+    pandoc = None
+    warning  = "warning: "
+    warning += "pandoc is not available, ReST content generation is disabled."
+    print >> sys.stderr, warning
+
 
 # Metadata
+__main__ = (__name__ == "__main__")
+
+def _open(filename):
+    "Open a data file with the Resource Management API"
+    requirement = pkg_resources.Requirement.parse(__name__)
+    try:
+        file = open(pkg_resources.resource_filename(requirement, filename))
+    except (IOError, pkg_resources.DistributionNotFound):
+        file = open(filename)
+    return file
+
 metadata = dict(
-    __name__        = __name__,
-    __appname__     = "about",
-    __version__     = "2.2.2",
+    __name__        = "about",
+    __version__     = "3.0.0-alpha.1",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
+    __summary__     = "Metadata for Humans",
+    __readme__      = _open("README.md").read(),
     __doc__         = __doc__,
-    __docformat__   = "markdown",
-    __classifiers__ = ["Programming Language :: Python :: 2.7",
-                       "Topic :: Software Development",
-                       "License :: OSI Approved :: MIT License"]
-  )
+    __classifiers__ = ["Programming Language :: Python :: 2.7" ,
+                       "Topic :: Software Development"         ,
+                       "Operating System :: OS Independent"    ,
+                       "Intended Audience :: Developers"       ,
+                       "License :: OSI Approved :: MIT License",
+                       "Development Status :: 3 - Alpha"       ]
+)
 
 globals().update(metadata)
 
-# TODO
-# ------------------------------------------------------------------------------
-#
-# The pydoc convention assumed for the documentation does not fit the
-# Markdown model. Pydoc assumes some
-#
-#     Summary (one-liner)
-#
-#     Description
-#
-# structure and will generate a 
-#
-#     Title: Project Name (Version)
-#     Subtitle: Summary (one-liner)
-#
-# while markdown document would probably be structured as:
-#
-#     Title
-#     =========
-#
-#     Description
-#
-# So we need to get rid of the title decoration and maybe expect a title
-# like "Project: Summary" or "Project -- Summary", or that kind of things.
-# Don't do anything about the project name repetition, it's too complex and
-# no big deal, but do detect the possible markdown syntaxes for title and
-# remove that to produce the summary.
+def setup(source, **kwargs):
+    setuptools_kwargs = get_metadata(source)
+    setuptools_kwargs.update(kwargs)
+    return setuptools.setup(**setuptools_kwargs)
 
-
-def get_metadata(module):
+def get_metadata(source):
     """
-    Get the metadata content from the module argument.
-
-    This function uses the following variables when they are defined:
-
-        __name__
-        __appname__
-        __version__
-        __license__
-        __author__
-        __url__
-        __doc__
-        __docformat__
-        __classifiers__
+    Extract the metadata from the module or dict argument.
 
     It returns a `metadata` dictionary that provides keywords arguments
     for the setuptools `setup` function.
     """
 
-    about_data = module.__dict__
-    metadata = {}
+    if isinstance(source, types.ModuleType):
+        metadata = source.__dict__
+    else:
+        metadata = source
 
-    # Read the relevant __*__ module attributes.
-    names = """
-        __name__
-        __appname__
-        __version__
-        __license__
-        __author__
-        __url__
-        __doc__
-        __docformat__
-        __classifiers__
-    """
-    for name in names.split():
-        value = about_data.get(name)
-        if value is not None:
-            metadata[name[2:-2]] = value
+    setuptools_kwargs = {}
+
+    for key in "name version url license".split():
+        val = metadata.get("__" + key + "__")
+        if val is not None:
+            setuptools_kwargs[key] = val
+
+    version = metadata.get("__version__")
+    if version is not None:
+        setuptools_kwargs["version"] = version
 
     # Search for author email with a <...@...> syntax in the author field.
-    author = metadata.get("author")
+    author = metadata.get("__author__")
     if author is not None:
         email_pattern = r"<([^>]+@[^>]+)>"
         match = re.search(email_pattern, author)
         if match is not None:
-            metadata["author_email"] = email = match.groups()[0]
-            metadata["author"] = author.replace("<" + email + ">", "").strip()
+            setuptools_kwargs["author_email"] = email = match.groups()[0]
+            setuptools_kwargs["author"] = author.replace("<" + email + ">", "").strip()
         else:
-            metadata["author"] = author
+            setuptools_kwargs["author"] = author
 
-    # Get the module summary and description from the docstring.
-
-    # Process the doc format first (markdown is the default format)
-    doc = metadata.get("doc")
-    if doc is not None:
-        docformat = metadata.get("docformat", "markdown").lower()
-        if "rest" in docformat or "restructuredtext" in docformat:
-            pass
-        elif "markdown" in docformat:
-            # Try to refresh the ReST documentation in 'doc/doc.rst'
-            try:
-                pandoc = sh.pandoc
-                try:
-                    sh.mkdir("doc")
-                except sh.ErrorReturnCode:
-                    pass
-                sh.pandoc("-o", "doc/doc.rst", _in=doc)            
-            except sh.CommandNotFound, sh.ErrorReturnCode:
-                warning = "warning: cannot generate the ReST documentation."
-                print >> sys.stderr, warning
-           # Fallback on the old 'doc/doc.rst' file if it exists.
-            try:
-                doc = path("doc/doc.rst").open().read()
-            except IOError, sh.ErrorReturnCode:
-                doc = None # there is nothing we can do at this stage.
-                warning = "warning: unable to use existing ReST documentation."
-                print >> sys.stderr, warning
+    # Get the module summary and readme.
+    summary = metadata.get("__summary__")
+    if summary is not None:
+        setuptools_kwargs["description"] = summary
+    readme = metadata.get("__readme__")
+    # The readme is supposed to be in markdown.
+    if readme is not None:
+        # Try to refresh the ReST documentation in 'doc/doc.rst'
+        if pandoc:
+            readme_rst = str(pandoc("-t", "rst", _in=readme))             
         else:
-             error = "the doc format should be 'markdown' or 'restructuredtext'."
-             raise ValueError(error)
-        if doc is not None:
-            # We assume that pydoc conventions are met: 
-            # the first line is the summary, it's followed by a blankline, 
-            # and then by the long description. 
-            metadata["description"], metadata["long_description"] = pydoc.splitdoc(doc)
+            warning = "warning: cannot generate the ReST documentation."
+            print >> sys.stderr, warning
+            rst = readme_rst # d'oh!
+        setuptools_kwargs["long_description"] = readme_rst
 
     # Process trove classifiers.
-    classifiers = metadata.get("classifiers")
+    classifiers = metadata.get("__classifiers__")
     if classifiers and isinstance(classifiers, str):
         classifiers = [c.strip() for c in classifiers.splitlines() if c.strip()]
-        metadata["classifiers"] = classifiers
+    setuptools_kwargs["classifiers"] = classifiers
 
-    return metadata
+    return setuptools_kwargs
 
 def printer(line, stdin):
     print line,
@@ -253,14 +166,14 @@ class About(setuptools.Command):
            attrs.append(("description", None))
 
         attrs.extend([
+            # I am ditching "keywords" but keeping "classifiers".
+            # (no one is declaring or using "keywords" AFAICT)
             ("classifiers" , metadata.classifiers     ),
-            ("platform"    , metadata.platforms       ),
+            # How can we specify the platforms in the setup.py ?
+            ("platforms"   , metadata.platforms       ),
+            # Do we need a download url ?
             ("download url", metadata.download_url    ),
         ])
-
-        # I am ditching "keywords" but keeping "classifiers".
-        # (no one is declaring or using "keywords" AFAICT)
-        attrs.append(("classifiers", metadata.classifiers))
 
         # Get the mandatory, runtime, declarative dependencies 
         # (managed by setuptools).
@@ -286,9 +199,9 @@ class About(setuptools.Command):
         print
 
 
-if __name__ == "__main__":
+if __main__:
     import about
     local = open("about.py", "w")
     local.write(open(inspect.getsourcefile(about)).read())
     local.close()
-    
+
