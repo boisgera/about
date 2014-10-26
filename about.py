@@ -17,12 +17,13 @@ import pkg_resources
 import setuptools
 import sh
 
+# This Module
+__all__  = ["get_metadata"]
 
 #
 # Metadata
 # ------------------------------------------------------------------------------
 #
-__all__  = ["get_metadata"]
 __main__ = (__name__ == "__main__") # we are about to override __name__.
 
 metadata = dict(
@@ -82,11 +83,11 @@ def trueish(value):
     else:
         value = string.lower(value)
         if value in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    elif value in ("", "n", "no", "f", "false", "off", "0"):
-        return False
-    else:
-        raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
+            return True
+        elif value in ("", "n", "no", "f", "false", "off", "0"):
+            return False
+        else:
+            raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
 
 #
 # Generation of Metadata for Setuptools
