@@ -15,16 +15,18 @@ except ImportError:
 sys.path.insert(0, "lib")
 import about
 
+metadata     = about.get_metadata(about)
 contents     = dict(py_modules=["about"], zip_safe=False)
 requirements = dict(install_requires=["path.py", "setuptools", "sh"]) 
 data         = dict(data_files = [("", ["README.md"])])
 plugins      = dict(entry_points={"distutils.commands": "about = about:About"})
 
 info = {}
+info.update(metadata)
 info.update(contents)
 info.update(requirements)
 info.update(plugins)
 
 if __name__ == "__main__":
-    about.setup(about, **info)
+    setuptools.setup(**info)
 
