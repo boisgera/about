@@ -73,7 +73,7 @@ def rest_generation_required():
         parser.read("setup.cfg")
         try:
             REST = trueish(parser.get("global", "rest"))
-        except ConfigParser.NoOptionError:
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             pass
     return REST
 
