@@ -28,12 +28,12 @@ __main__ = (__name__ == "__main__") # we are about to override __name__.
 
 metadata = dict(
     __name__        = "about",
-    __version__     = "4.0.0-alpha",
+    __version__     = "4.0.0-alpha.2",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
     __summary__     = "Software Metadata for Humans",
-    __readme__      = None,
+    __readme__      = "README.md",
     __doc__         = __doc__,
     __classifiers__ = ["Programming Language :: Python :: 2.7" ,
                        "Topic :: Software Development"         ,
@@ -72,7 +72,7 @@ def rest_generation_required():
         parser = ConfigParser.RawConfigParser()
         parser.read("setup.cfg")
         try:
-            REST = trueish(parser.get("global", "rest"))
+            REST = trueish(parser.get("about", "rest"))
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             pass
     return REST
@@ -81,7 +81,7 @@ def trueish(value):
     if not isinstance(value, str):
         return bool(value)
     else:
-        value = string.lower(value)
+        value = value.lower()
         if value in ("y", "yes", "t", "true", "on", "1"):
             return True
         elif value in ("", "n", "no", "f", "false", "off", "0"):
@@ -100,7 +100,6 @@ def get_metadata(source):
     It returns a `metadata` dictionary that provides keywords arguments
     for the setuptools `setup` function.
     """
-
     if isinstance(source, types.ModuleType):
         metadata = source.__dict__
     else:
