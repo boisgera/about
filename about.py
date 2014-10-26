@@ -12,7 +12,6 @@ import sys
 import types
 
 # Third-Party Libraries
-from path import path
 import pkg_resources
 import setuptools
 import sh
@@ -28,7 +27,7 @@ __main__ = (__name__ == "__main__") # we are about to override __name__.
 
 metadata = dict(
     __name__        = "about",
-    __version__     = "4.0.0-alpha.2",
+    __version__     = "4.0.0-alpha.3",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
@@ -71,7 +70,7 @@ def rest_generation_required():
     elif os.path.isfile("setup.cfg"):
         parser = ConfigParser.RawConfigParser()
         parser.read("setup.cfg")
-        try:
+        try: 
             REST = trueish(parser.get("about", "rest"))
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             pass
@@ -160,87 +159,4 @@ def get_metadata(source):
     setuptools_kwargs["classifiers"] = classifiers
 
     return setuptools_kwargs
-
-
-# Get rid of this ? Is this information not already in the PKG-INFO file ?
-
-# TODO: accept r/rest option (don't do anything of it, but accept it).
-class About(setuptools.Command):
-
-    description = "Display Project Metadata"
-
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        metadata = self.distribution.metadata
-
-        attrs = [
-            ("name"     , metadata.name       ),
-            ("version"  , metadata.version    ),
-            ("summary"  , metadata.description),
-            ("homepage" , metadata.url        ),
-            ("license"  , metadata.license    ),
-        ]
-
-        author = metadata.author
-        maintainer = metadata.maintainer
-        if author:
-            attrs.extend([
-                ("author", metadata.author      ),
-                ("e-mail", metadata.author_email),
-            ])
-        if maintainer and maintainer != author:
-            attrs.extend([
-                ("maintainer", metadata.maintainer      ),
-                ("e-mail"    , metadata.maintainer_email),
-            ])
-
-        desc = metadata.long_description
-        if desc:
-           line_count = len(desc)
-           attrs.append(("description", "yes ({0} lines)".format(line_count)))
-        else:
-           attrs.append(("description", None))
-
-        attrs.extend([
-            # I am ditching "keywords" but keeping "classifiers".
-            # (no one is declaring or using "keywords" AFAICT)
-            ("classifiers" , metadata.classifiers     ),
-            # How can we specify the platforms in the setup.py ?
-            ("platforms"   , metadata.platforms       ),
-            # Do we need a download url ?
-            ("download url", metadata.download_url    ),
-        ])
-
-        # Get the mandatory, runtime, declarative dependencies 
-        # (managed by setuptools).
-        attrs.append(("requires", self.distribution.install_requires))
-
-        print
-        for name, value in attrs:
-            print "  - " + name + ":",
-            if isinstance(value, list):
-                print
-                for item in value:
-                  print "      - " + str(item)
-            elif isinstance(value, basestring):
-                lines = value.splitlines()
-                if len(lines) <= 1:
-                    print value
-                else:
-                    print
-                    for line in lines:
-                        print "      | " + line
-            else:
-                print "undefined"
-        print
-
-
-
 
