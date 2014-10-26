@@ -242,9 +242,5 @@ class About(setuptools.Command):
         print
 
 
-if __main__:
-    import about # this, my dear, is buggy if about exist locally.
-    local = open("about.py", "w")
-    local.write(open(inspect.getsourcefile(about)).read())
-    local.close()
+
 
