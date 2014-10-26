@@ -163,6 +163,8 @@ def get_metadata(source):
 
 
 # Get rid of this ? Is this information not already in the PKG-INFO file ?
+
+# TODO: accept r/rest option (don't do anything of it, but accept it).
 class About(setuptools.Command):
 
     description = "Display Project Metadata"
