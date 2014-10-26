@@ -1,5 +1,5 @@
 include README.md
 include README.md.rst
-include lib/*.py
+recursive-include lib *
 
 
