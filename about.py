@@ -2,9 +2,10 @@
 # coding: utf-8
 
 # Python 2.7 Standard Library
+import ConfigParser
 import importlib
 import inspect
-import os
+import os.path
 import pydoc
 import re
 import sys
@@ -15,30 +16,18 @@ from path import path
 import pkg_resources
 import setuptools
 import sh
-try:
-    pandoc = sh.pandoc
-except sh.CommandNotFound:
-    pandoc = None
-    warning  = "warning: "
-    warning += "pandoc is not available, ReST content generation is disabled."
-    print >> sys.stderr, warning
 
 
+#
 # Metadata
-__main__ = (__name__ == "__main__")
-
-def _open(filename):
-    "Open a data file with the Resource Management API"
-    requirement = pkg_resources.Requirement.parse(__name__)
-    try:
-        file = open(pkg_resources.resource_filename(requirement, filename))
-    except (IOError, pkg_resources.DistributionNotFound):
-        file = open(filename)
-    return file
+# ------------------------------------------------------------------------------
+#
+__all__  = ["get_metadata"]
+__main__ = (__name__ == "__main__") # we are about to override __name__.
 
 metadata = dict(
     __name__        = "about",
-    __version__     = "3.0.0-alpha.4",
+    __version__     = "4.0.0-alpha",
     __license__     = "MIT License",
     __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
     __url__         = "https://warehouse.python.org/project/about",
@@ -55,11 +44,54 @@ metadata = dict(
 
 globals().update(metadata)
 
-def setup(source, **kwargs):
-    setuptools_kwargs = get_metadata(source)
-    setuptools_kwargs.update(kwargs)
-    return setuptools.setup(**setuptools_kwargs)
+#
+# Setuptools Monkey-Patching
+# ------------------------------------------------------------------------------
+#
+setuptools.Distribution.global_options.append(
+  ("rest", "r", "generate ReST README")
+)
 
+#
+# ReStructuredText Generation Support
+# ------------------------------------------------------------------------------
+#
+def rest_generation_required():
+    # We sort of assume here that we are being called from a setup.py.
+    # To be safe, we should CHECK that in get_metadata and generate
+    # an error otherwise.
+    REST = False
+    if "-r" in sys.argv:
+        sys.argv.remove("-r")
+        REST = True
+    elif "--rest" in sys.argv:
+        sys.argv.remove("--rest")
+        REST = True
+    elif os.path.isfile("setup.cfg"):
+        parser = ConfigParser.RawConfigParser()
+        parser.read("setup.cfg")
+        try:
+            REST = trueish(parser.get("global", "rest"))
+        except ConfigParser.NoOptionError:
+            pass
+    return REST
+
+def trueish(value):
+    if not isinstance(value, str):
+        return bool(value)
+    else:
+        value = string.lower(value)
+        if value in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    elif value in ("", "n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
+
+#
+# Generation of Metadata for Setuptools
+# ------------------------------------------------------------------------------
+#
 def get_metadata(source):
     """
     Extract the metadata from the module or dict argument.
@@ -96,22 +128,31 @@ def get_metadata(source):
         else:
             setuptools_kwargs["author"] = author
 
-    # Get the module summary and readme.
+    # Get the module summary.
     summary = metadata.get("__summary__")
     if summary is not None:
         setuptools_kwargs["description"] = summary
-    readme = metadata.get("__readme__")
-    # The readme is supposed to be in markdown.
-    if readme is not None:
-        # Try to refresh the ReST documentation in 'doc/doc.rst'
-        if pandoc:
-            readme_rst = str(pandoc("-t", "rst", _in=readme))             
-        else:
-            warning = "warning: cannot generate the ReST documentation."
-            print >> sys.stderr, warning
-            rst = readme_rst # d'oh!
-        setuptools_kwargs["long_description"] = readme_rst
 
+    # Get and process the module README, 
+    # under the assumption that `__readme__` is the name of a markdown file.
+    readme = metadata.get("__readme__")
+    build_rest = rest_generation_required()
+    if readme is not None:
+        readme_rst = readme + ".rst"
+        if build_rest:
+            try:
+                _ = sh.pandoc
+            except sh.CommandNotFound:
+                error = "cannot find pandoc to generate ReST documentation."
+                raise ImportError(error)
+            sh.pandoc("-o", readme_rst, readme) 
+        
+        if os.path.exists(readme_rst):
+            readme_filename = readme_rst
+        else:
+            readme_filename = readme
+        setuptools_kwargs["long_description"] = open(readme_filename).read()
+ 
     # Process trove classifiers.
     classifiers = metadata.get("__classifiers__")
     if classifiers and isinstance(classifiers, str):
@@ -120,9 +161,8 @@ def get_metadata(source):
 
     return setuptools_kwargs
 
-def printer(line, stdin):
-    print line,
 
+# Get rid of this ? Is this information not already in the PKG-INFO file ?
 class About(setuptools.Command):
 
     description = "Display Project Metadata"
@@ -142,7 +182,7 @@ class About(setuptools.Command):
             ("name"     , metadata.name       ),
             ("version"  , metadata.version    ),
             ("summary"  , metadata.description),
-            ("home page", metadata.url        ),
+            ("homepage" , metadata.url        ),
             ("license"  , metadata.license    ),
         ]
 
