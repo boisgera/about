@@ -55,7 +55,6 @@ def lib_required():
     return LIB
 
 def install_lib(setup_requires, libdir="lib"):
-    # TODO: remove pyc files ? (no cross-platform ?)
     shutil.rmtree(libdir)
     os.mkdir(libdir)
     pip_install = pip.commands["install"]().main
