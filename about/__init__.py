@@ -16,9 +16,6 @@ import pkg_resources
 import setuptools
 import sh
 
-# Exports
-__all__  = ["get_metadata"]
-
 #
 # Metadata
 # ------------------------------------------------------------------------------
@@ -58,6 +55,16 @@ def rest_generation_required():
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             pass
     return REST
+
+def generate_rest_readme(filename):
+    readme = filename
+    readme_rst = filename + ".rst"
+    try:
+        _ = sh.pandoc
+    except sh.CommandNotFound:
+        error = "cannot find pandoc to generate ReST documentation."
+        raise ImportError(error)
+    sh.pandoc("-o", readme_rst, readme) 
 
 def trueish(value):
     if not isinstance(value, str):
@@ -118,22 +125,11 @@ def get_metadata(source):
     # Get and process the module README, 
     # under the assumption that `__readme__` is the name of a markdown file.
     readme = metadata.get("__readme__")
-    build_rest = rest_generation_required()
     if readme is not None:
-        readme_rst = readme + ".rst"
-        if build_rest:
-            try:
-                _ = sh.pandoc
-            except sh.CommandNotFound:
-                error = "cannot find pandoc to generate ReST documentation."
-                raise ImportError(error)
-            sh.pandoc("-o", readme_rst, readme) 
-        
-        if os.path.exists(readme_rst):
-            readme_filename = readme_rst
-        else:
-            readme_filename = readme
-        setuptools_kwargs["long_description"] = open(readme_filename).read()
+        if rest_generation_required():
+            generate_rest_readme(filename=readme)
+        if os.path.exists(readme + ".rst"):
+            setuptools_kwargs["long_description"] = open(readme + ".rst").read()
  
     # Process trove classifiers.
     classifiers = metadata.get("__classifiers__")

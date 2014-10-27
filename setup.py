@@ -3,6 +3,7 @@
 # Python 2.7 Standard Library
 import ConfigParser
 import os
+import os.path
 import shutil
 import sys
 
@@ -16,15 +17,65 @@ except ImportError:
 
 # Local Libraries
 setup_requires = ["sh"]
-if not os.path.exists("lib"):
+
+
+# Setup Libraries 
+# ------------------------------------------------------------------------------
+def trueish(value):
+    if not isinstance(value, str):
+        return bool(value)
+    else:
+        value = value.lower()
+        if value in ("y", "yes", "t", "true", "on", "1"):
+            return True
+        elif value in ("", "n", "no", "f", "false", "off", "0"):
+            return False
+        else:
+            raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
+
+setuptools.Distribution.global_options.append(
+  ("lib", "l", "install setup dependencies")
+)
+
+def lib_required():
+    LIB = False
+    if "-l" in sys.argv:
+        sys.argv.remove("-l")
+        LIB = True
+    elif "--lib" in sys.argv:
+        sys.argv.remove("--lib")
+        LIB = True
+    elif os.path.isfile("setup.cfg"):
+        parser = ConfigParser.RawConfigParser()
+        parser.read("setup.cfg")
+        try: 
+            LIB = trueish(parser.get("global", "lib"))
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            pass
+    return LIB
+
+def install_lib(setup_requires):
+    shutil.rmtree("lib")
     os.mkdir("lib")
     pip_install = pip.commands["install"]().main
     for package in setup_requires:
-        error = pip_install(["--target=lib", "--ignore-installed", package])
+        options = ["--quiet", "--target=lib", "--ignore-installed"]
+        error = pip_install(options + [package])
         if error:
             raise RuntimeError("failed to install {0}.".format(package))
+    os.chmod("lib", 0o777)
+    for dir, subdirs, others in os.walk("lib"):
+        files = [os.path.join(dir, file) for file in subdirs + others]
+        for file in files:
+            os.chmod(file , 0o777)
+    assert sys.path[0] in ("", os.getcwd())
+    sys.path.insert(1, "lib")
 
-sys.path.insert(0, "lib")
+if lib_required():
+    install_lib(setup_requires)
+
+# ------------------------------------------------------------------------------
+
 import about
 
 metadata     = about.get_metadata(about)
