@@ -7,7 +7,7 @@ import os.path
 import shutil
 import sys
 
-# Third-Party Libraries
+# Pip Package Manager
 try:
     import pip
     import setuptools
@@ -15,12 +15,9 @@ except ImportError:
     error = "pip is not installed, refer to <{url}> for instructions."
     raise ImportError(error.format(url="http://pip.readthedocs.org"))
 
-# Local Libraries
+# Third-Party Libraries (automated install)
 setup_requires = ["sh"]
 
-
-# Setup Libraries 
-# ------------------------------------------------------------------------------
 def trueish(value):
     if not isinstance(value, str):
         return bool(value)
