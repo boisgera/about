@@ -25,24 +25,7 @@ __all__  = ["get_metadata"]
 #
 __main__ = (__name__ == "__main__") # we are about to override __name__.
 
-metadata = dict(
-    __name__        = "about",
-    __version__     = "4.0.0-alpha.5",
-    __license__     = "MIT License",
-    __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
-    __url__         = "https://warehouse.python.org/project/about",
-    __summary__     = "Software Metadata for Humans",
-    __readme__      = "README.md",
-    __doc__         = __doc__,
-    __classifiers__ = ["Programming Language :: Python :: 2.7" ,
-                       "Topic :: Software Development"         ,
-                       "Operating System :: OS Independent"    ,
-                       "Intended Audience :: Developers"       ,
-                       "License :: OSI Approved :: MIT License",
-                       "Development Status :: 3 - Alpha"       ]
-)
-
-globals().update(metadata)
+from .about import *
 
 #
 # Setuptools Monkey-Patching
