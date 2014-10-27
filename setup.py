@@ -54,22 +54,23 @@ def lib_required():
             pass
     return LIB
 
-def install_lib(setup_requires):
-    shutil.rmtree("lib")
-    os.mkdir("lib")
+def install_lib(setup_requires, libdir="lib"):
+    # TODO: remove pyc files ? (no cross-platform ?)
+    shutil.rmtree(libdir)
+    os.mkdir(libdir)
     pip_install = pip.commands["install"]().main
     for package in setup_requires:
-        options = ["--quiet", "--target=lib", "--ignore-installed"]
+        options = ["--quiet", "--target=" + libdir, "--ignore-installed"]
         error = pip_install(options + [package])
         if error:
             raise RuntimeError("failed to install {0}.".format(package))
-    os.chmod("lib", 0o777)
-    for dir, subdirs, others in os.walk("lib"):
+    os.chmod(libdir, 0o777)
+    for dir, subdirs, others in os.walk(libdir):
         files = [os.path.join(dir, file) for file in subdirs + others]
         for file in files:
             os.chmod(file , 0o777)
     assert sys.path[0] in ("", os.getcwd())
-    sys.path.insert(1, "lib")
+    sys.path.insert(1, libdir)
 
 if lib_required():
     install_lib(setup_requires)
