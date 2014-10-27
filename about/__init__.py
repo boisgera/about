@@ -16,7 +16,7 @@ import pkg_resources
 import setuptools
 import sh
 
-# This Module
+# Exports
 __all__  = ["get_metadata"]
 
 #

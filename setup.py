@@ -28,7 +28,7 @@ sys.path.insert(0, "lib")
 import about
 
 metadata     = about.get_metadata(about)
-contents     = dict(py_modules=["about"], zip_safe=False)
+contents     = dict(packages = setuptools.find_packages())
 requirements = dict(install_requires=["setuptools", "sh"]) 
 data         = dict(data_files = [("", ["README.md"])])
 scripts      = {}
