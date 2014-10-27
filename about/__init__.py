@@ -25,17 +25,15 @@ __main__ = (__name__ == "__main__") # we are about to override __name__.
 from .about import *
 
 #
-# Setuptools Monkey-Patching
+# ReStructuredText Generation Support
 # ------------------------------------------------------------------------------
 #
+
+# Setuptools monkey-patching
 setuptools.Distribution.global_options.append(
   ("rest", "r", "generate ReST README")
 )
 
-#
-# ReStructuredText Generation Support
-# ------------------------------------------------------------------------------
-#
 def rest_generation_required():
     # We sort of assume here that we are being called from a setup.py.
     # To be safe, we should CHECK that in get_metadata and generate
