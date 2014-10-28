@@ -74,6 +74,10 @@ if lib_required():
 
 # ------------------------------------------------------------------------------
 
+print "***", os.getcwd()
+print "***", os.listdir("lib")
+print "***", sys.path
+
 import about
 import about.about
 
