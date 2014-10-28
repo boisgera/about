@@ -51,7 +51,7 @@ def lib_required():
             pass
     return LIB
 
-def install_lib(setup_requires, libdir="lib"):
+def install_lib(setup_requires, libdir):
     if os.path.exists(libdir):
         shutil.rmtree(libdir)
     os.mkdir(libdir)
@@ -66,17 +66,14 @@ def install_lib(setup_requires, libdir="lib"):
         files = [os.path.join(dir, file) for file in subdirs + others]
         for file in files:
             os.chmod(file , 0o777)
-    assert sys.path[0] in ("", os.getcwd())
-    sys.path.insert(1, libdir)
 
 if lib_required():
-    install_lib(setup_requires)
+    install_lib(setup_requires, "lib")
+
+assert sys.path[0] in ("", os.getcwd())
+sys.path.insert(1, "lib")
 
 # ------------------------------------------------------------------------------
-
-print "***", os.getcwd()
-print "***", os.listdir("lib")
-print "***", sys.path
 
 import about
 import about.about
