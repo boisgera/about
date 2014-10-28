@@ -52,6 +52,9 @@ def lib_required():
     return LIB
 
 def install_lib(setup_requires, libdir="lib"):
+
+    print "***", os.getcwd()
+
     if os.path.exists(libdir):
         shutil.rmtree(libdir)
     os.mkdir(libdir)
