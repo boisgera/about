@@ -74,8 +74,9 @@ if lib_required():
 # ------------------------------------------------------------------------------
 
 import about
+import about.about
 
-metadata     = about.get_metadata(about)
+metadata     = about.get_metadata(about.about)
 contents     = dict(packages = setuptools.find_packages())
 requirements = dict(install_requires=["setuptools", "sh"]) 
 data         = dict(data_files = [("", ["README.md"])])
