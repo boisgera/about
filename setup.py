@@ -58,12 +58,17 @@ def install_lib(setup_requires, libdir="lib"):
     if os.path.exists(libdir):
         shutil.rmtree(libdir)
     os.mkdir(libdir)
+
+    print "*** ls:", os.listdir(os.getcwd())
+
     pip_install = pip.commands["install"]().main
     for package in setup_requires:
         options = ["--quiet", "--target=" + libdir, "--ignore-installed"]
         error = pip_install(options + [package])
         if error:
             raise RuntimeError("failed to install {0}.".format(package))
+
+    print "*** >"
     os.chmod(libdir, 0o777)
     for dir, subdirs, others in os.walk(libdir):
         files = [os.path.join(dir, file) for file in subdirs + others]
