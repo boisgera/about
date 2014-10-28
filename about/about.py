@@ -2,7 +2,7 @@
 
 metadata = dict(
   __name__        = "about",
-  __version__     = "4.0.1-alpha.3",
+  __version__     = "4.0.1-alpha.4",
   __license__     = "MIT License",  
   __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
   __url__         = "https://warehouse.python.org/project/about",
