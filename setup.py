@@ -70,6 +70,7 @@ def install_lib(setup_requires, libdir="lib"):
 
     print "*** >"
     os.chmod(libdir, 0o777)
+    print "*** >>"
     for dir, subdirs, others in os.walk(libdir):
         files = [os.path.join(dir, file) for file in subdirs + others]
         for file in files:
