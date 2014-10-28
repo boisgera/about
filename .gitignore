@@ -1,10 +1,13 @@
+
 *~
+*.bak
+
 *.pyc
 *.egg-info
-*.bak
-setup.cfg
+
+README.md.rst
 
 build
 dist
-
+lib
 
