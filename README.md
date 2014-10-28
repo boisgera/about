@@ -1,4 +1,7 @@
 
+About -- Software Metadata for Humans
+================================================================================
+
 **Summary:** define the metadata of your project in a single place, 
 then make it available at setup-time and at runtime.
 
