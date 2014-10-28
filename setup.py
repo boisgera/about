@@ -52,7 +52,8 @@ def lib_required():
     return LIB
 
 def install_lib(setup_requires, libdir="lib"):
-    shutil.rmtree(libdir)
+    if os.path.exists(libdir):
+        shutil.rmtree(libdir)
     os.mkdir(libdir)
     pip_install = pip.commands["install"]().main
     for package in setup_requires:
