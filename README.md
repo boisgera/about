@@ -1,5 +1,5 @@
 
-About -- Software Metadata for Humans
+About
 ================================================================================
 
 **Summary:** define the metadata of your project in a single place, 
