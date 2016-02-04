@@ -17,18 +17,14 @@ import pkg_resources
 import setuptools
 import sh
 
-#
 # Metadata
 # ------------------------------------------------------------------------------
-#
 __main__ = (__name__ == "__main__") # we are about to override __name__.
 
 from .about import *
 
-#
 # ReStructuredText Generation Support
 # ------------------------------------------------------------------------------
-#
 
 # Setuptools monkey-patching
 setuptools.Distribution.global_options.append(
@@ -77,42 +73,62 @@ def trueish(value):
         else:
             raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
 
-#
 # Generation of Metadata for Setuptools
 # ------------------------------------------------------------------------------
-#
+trove = None
 
-TROVE = pkg_resources.resource_string("about", "Trove-classifiers.txt")
+def clean(text):
+    text = text.replace("(", "").replace(")", "")
+    text = text.replace("/", " ")
+    text = text.replace(" - ", " ")
+    return text.lower()
 
-# TODO: preprocess TROVE a list of lists of words (split on "::" and space and /)
-#       Mmmm that's probably not very smart. Consider a split on "::" only probably.
-#       Arf: "/" has a special meaning: most of the time (always ?), it is a OR,
-#       (or AND depending on your POV: a group of several related categories)
-#       or a synonym ; matching one of the component of the / should be a 100%. 
-#       Arf this is a mess; not only do we have things like "OS/2" that don't fit
-#       but sometimes A B / C should be read as (A B) / (A C), not (A B) / C.
-#       I may need to annotate (use quotes and braces for example ?) the list
-#       of classifiers for an easier processsing. 
-# TODO. given a keywords, split in words. 
-#       Then, should compare with the list of lists, weight according to
-#       fragment match, weigh with the "specialisation" of the match ...
-#       Matching is the end is better than matching the start, BUT, this
-#       is sometimes ambiguous, sometimes not, and that semantic info is
-#       NOT in the list, I definitely NEED to decorate it. Ex: we cannot
-#       be satisfied with only "appplication" that matches ...
-#
-#       finally, try https://pypi.python.org/pypi/python-Levenshtein/0.12.0 ?
-#       or be strict at the fragment level ? Nah, work out something simpler.
-#
-#       Try on the real list to think of all sequence of word that would be
-#       good enough. THEN, think of a method. 
+def generate_trove():
+    global trove
+    if trove is None:
+        trove = []
+        load = pkg_resources.resource_string
+        trove_text = load("about", "Trove-classifiers.txt")
+        for trove_id in trove_text.splitlines():
+            parts = trove_id.split(" :: ")
+            context = clean(" ".join(parts[:-1])).split()
+            name = clean(parts[-1]).split()
+            trove.append({"id": trove_id, "name": name, "context": context})
+
+def match(items, ref_items, trove=trove):
+    matches = [item in ref_items for item in items].count(True)
+    score = float(matches) / (len(items) + len(ref_items) - matches)
+    #print "*", score, items, ref_items
+    return score
 
 def trove_search(keyword):
-    results = []
-    for classifier in TROVE:
-        value = difflib.SequenceMatcher(None, keyword, classifier).ratio() 
-        results.append((value, classifier))
-    return sorted(results)
+    generate_trove()
+    parts = [p.strip().lower() for p in keyword.split("/")]
+    try:
+        name = parts[-1].split() 
+        if len(parts) == 2:
+            context = parts[0].split()
+        else:
+            context = None
+    except:
+        error = "Invalid keyword {keyword!r}"
+        raise ValueError(error.format(keyword=keyword))
+    matches = {}
+    for item in trove:
+        score = match(name, item["name"])
+        matches.setdefault(score, []).append(item)
+    max_ = sorted(matches.keys())[-1]
+    if len(matches[max_]) == 1:
+        return matches[max_][0]["id"]
+    elif context:
+        matches = {}
+        subtrove = [matches[max_]]
+        for item in subtrove:
+            score = match(name, item["context"])
+            matches.setdefault(score, []).append(item)
+        max_ = sorted(matches.keys())[-1]
+        if len(matches[max_]) == 1:
+            return matches[max_][0]["id"]
 
 def get_metadata(source):
     """
@@ -163,27 +179,21 @@ def get_metadata(source):
         if os.path.exists(readme + ".rst"):
             setuptools_kwargs["long_description"] = open(readme + ".rst").read()
  
+    # TODO: add license info from license field and dvlpt status from version.
     # Process trove classifiers.
-
-
-    # TODO: grab the alpha/beta/production status from the version.
-    # TODO: grab the license info from the license.
-    # TODO: grap the keywords ("," separated or list ?) and best-match vs trove list
-    #       after case normalization. Should we fuzzy-match ? Always find the best ?
-    #       Ignore the unclear ? use difflib ? (http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/). Yeahn use fuzzy wuzzy to get the best match for some
-# string and the corresponding score ... or optionally a list of the best matches.
-# Externalize this particular feature ?
-    #       How are we supposed to specify some hierarchy, e.g. Turbogears :: Applications ?
-    #       Drop the "::" in the string ?
-    # TODO: finally, use the classifiers if any.
-    classifiers = []
-
     keywords = metadata.get("__keywords__")
-
-    classifiers = metadata.get("__classifiers__")
-    if classifiers and isinstance(classifiers, str):
-        classifiers = [c.strip() for c in classifiers.splitlines() if c.strip()]
-    setuptools_kwargs["classifiers"] = classifiers
+    if keywords is not None:
+        classifiers = []
+        keywords = [k.strip() for k in keywords.split(",")]
+        for keyword in keywords:
+            trove_id = trove_search(keyword)
+            if trove_id is None:
+                error = "ambiguous keyword: {keyword!r}"
+                raise ValueError(error.format(keyword=keyword))
+            else:
+                classifiers.append(trove_id)
+        classifiers = sorted(list(set(classifiers)))
+        setuptools_kwargs["classifiers"] = classifiers
 
     return setuptools_kwargs
 
