@@ -12,6 +12,7 @@ import sys
 import types
 
 # Third-Party Libraries
+import difflib
 import pkg_resources
 import setuptools
 import sh
@@ -80,6 +81,39 @@ def trueish(value):
 # Generation of Metadata for Setuptools
 # ------------------------------------------------------------------------------
 #
+
+TROVE = pkg_resources.resource_string("about", "Trove-classifiers.txt")
+
+# TODO: preprocess TROVE a list of lists of words (split on "::" and space and /)
+#       Mmmm that's probably not very smart. Consider a split on "::" only probably.
+#       Arf: "/" has a special meaning: most of the time (always ?), it is a OR,
+#       (or AND depending on your POV: a group of several related categories)
+#       or a synonym ; matching one of the component of the / should be a 100%. 
+#       Arf this is a mess; not only do we have things like "OS/2" that don't fit
+#       but sometimes A B / C should be read as (A B) / (A C), not (A B) / C.
+#       I may need to annotate (use quotes and braces for example ?) the list
+#       of classifiers for an easier processsing. 
+# TODO. given a keywords, split in words. 
+#       Then, should compare with the list of lists, weight according to
+#       fragment match, weigh with the "specialisation" of the match ...
+#       Matching is the end is better than matching the start, BUT, this
+#       is sometimes ambiguous, sometimes not, and that semantic info is
+#       NOT in the list, I definitely NEED to decorate it. Ex: we cannot
+#       be satisfied with only "appplication" that matches ...
+#
+#       finally, try https://pypi.python.org/pypi/python-Levenshtein/0.12.0 ?
+#       or be strict at the fragment level ? Nah, work out something simpler.
+#
+#       Try on the real list to think of all sequence of word that would be
+#       good enough. THEN, think of a method. 
+
+def trove_search(keyword):
+    results = []
+    for classifier in TROVE:
+        value = difflib.SequenceMatcher(None, keyword, classifier).ratio() 
+        results.append((value, classifier))
+    return sorted(results)
+
 def get_metadata(source):
     """
     Extract the metadata from the module or dict argument.
@@ -130,6 +164,22 @@ def get_metadata(source):
             setuptools_kwargs["long_description"] = open(readme + ".rst").read()
  
     # Process trove classifiers.
+
+
+    # TODO: grab the alpha/beta/production status from the version.
+    # TODO: grab the license info from the license.
+    # TODO: grap the keywords ("," separated or list ?) and best-match vs trove list
+    #       after case normalization. Should we fuzzy-match ? Always find the best ?
+    #       Ignore the unclear ? use difflib ? (http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/). Yeahn use fuzzy wuzzy to get the best match for some
+# string and the corresponding score ... or optionally a list of the best matches.
+# Externalize this particular feature ?
+    #       How are we supposed to specify some hierarchy, e.g. Turbogears :: Applications ?
+    #       Drop the "::" in the string ?
+    # TODO: finally, use the classifiers if any.
+    classifiers = []
+
+    keywords = metadata.get("__keywords__")
+
     classifiers = metadata.get("__classifiers__")
     if classifiers and isinstance(classifiers, str):
         classifiers = [c.strip() for c in classifiers.splitlines() if c.strip()]

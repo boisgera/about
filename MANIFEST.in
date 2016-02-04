@@ -1,5 +1,6 @@
 include LICENSE.txt
 include README.md
 include README.md.rst
-recursive-include lib *
+recursive-include .lib *
+recursive-exclude .lib *.pyc
 exclude setup.cfg

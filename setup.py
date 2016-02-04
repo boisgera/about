@@ -11,88 +11,48 @@ import sys
 try:
     import pip
     import setuptools
+    import pkg_resources
 except ImportError:
     error = "pip is not installed, refer to <{url}> for instructions."
     raise ImportError(error.format(url="http://pip.readthedocs.org"))
 
-# Third-Party Libraries (automated install)
-setup_requires = ["sh"]
+def local(path):
+    return os.path.join(os.path.dirname(__file__), path)
 
-def trueish(value):
-    if not isinstance(value, str):
-        return bool(value)
-    else:
-        value = value.lower()
-        if value in ("y", "yes", "t", "true", "on", "1"):
-            return True
-        elif value in ("", "n", "no", "f", "false", "off", "0"):
-            return False
-        else:
-            raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
+# Extra Third-Party Libraries
+try:
+    setup_requires = ["sh"]
+    require = lambda *r: pkg_resources.WorkingSet().require(*r)
+    require(*setup_requires)
+    import about
+except pkg_resources.DistributionNotFound:
+    error = """{req!r} not found; install it locally with:
 
-setuptools.Distribution.global_options.append(
-  ("lib", "l", "install setup dependencies")
-)
+    pip install --target=.lib --ignore-installed {req!r}
+"""
+    raise ImportError(error.format(req=" ".join(setup_requires)))
+sys.path.insert(1, local(".lib"))
+import sh
 
-def lib_required():
-    LIB = False
-    if "-l" in sys.argv:
-        sys.argv.remove("-l")
-        LIB = True
-    elif "--lib" in sys.argv:
-        sys.argv.remove("--lib")
-        LIB = True
-    elif os.path.isfile("setup.cfg"):
-        parser = ConfigParser.RawConfigParser()
-        parser.read("setup.cfg")
-        try: 
-            LIB = trueish(parser.get("global", "lib"))
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            pass
-    return LIB
-
-def install_lib(setup_requires, libdir):
-    if os.path.exists(libdir):
-        shutil.rmtree(libdir)
-    os.mkdir(libdir)
-    pip_install = pip.commands["install"]().main
-    for package in setup_requires:
-        options = ["--quiet", "--target=" + libdir, "--ignore-installed"]
-        error = pip_install(options + [package])
-        if error:
-            raise RuntimeError("failed to install {0}.".format(package))
-    os.chmod(libdir, 0o777)
-    for dir, subdirs, others in os.walk(libdir):
-        files = [os.path.join(dir, file) for file in subdirs + others]
-        for file in files:
-            os.chmod(file , 0o777)
-
-if lib_required():
-    install_lib(setup_requires, "lib")
-
-assert sys.path[0] in ("", os.getcwd())
-sys.path.insert(1, "lib")
 
 # ------------------------------------------------------------------------------
 
 import about
 import about.about
 
-metadata     = about.get_metadata(about.about)
-contents     = dict(packages = setuptools.find_packages())
-requirements = dict(install_requires=["setuptools", "sh"]) 
-data         = dict(data_files = [("", ["README.md"])])
-scripts      = {}
-plugins      = {}
+info = dict(
+  metadata     = about.get_metadata(about.about),
+  code         = dict(packages = setuptools.find_packages()),
+  data         = dict(data_files = [("", ["README.md"])]),
+  requirements = dict(install_requires=["setuptools", "sh"]), 
+  scripts      = {},
+  plugins      = {},
+  tests        = {},
+)
 
-info = {}
-info.update(metadata)
-info.update(contents)
-info.update(requirements)
-info.update(data)
-info.update(scripts)
-info.update(plugins)
+
 
 if __name__ == "__main__":
-    setuptools.setup(**info)
+    kwargs = {k:v for dct in info.values() for (k,v) in dct.items()}
+    setuptools.setup(**kwargs)
 
