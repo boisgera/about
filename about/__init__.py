@@ -54,10 +54,9 @@ def generate_trove():
             name = clean(parts[-1]).split()
             trove.append({"id": trove_id, "name": name, "context": context})
 
-def match(items, ref_items, trove=trove):
+def match_score(items, ref_items, trove=trove):
     matches = [item in ref_items for item in items].count(True)
     score = float(matches) / (len(items) + len(ref_items) - matches)
-    #print "*", score, items, ref_items
     return score
 
 def trove_search(keyword):
@@ -74,20 +73,20 @@ def trove_search(keyword):
         raise ValueError(error.format(keyword=keyword))
     matches = {}
     for item in trove:
-        score = match(name, item["name"])
+        score = match_score(name, item["name"])
         matches.setdefault(score, []).append(item)
     max_ = sorted(matches.keys())[-1]
     if len(matches[max_]) == 1:
         return matches[max_][0]["id"]
     elif context:
-        matches = {}
-        subtrove = [matches[max_]]
+        submatches = {}
+        subtrove = matches[max_]
         for item in subtrove:
-            score = match(name, item["context"])
-            matches.setdefault(score, []).append(item)
-        max_ = sorted(matches.keys())[-1]
-        if len(matches[max_]) == 1:
-            return matches[max_][0]["id"]
+            score = match_score(item["context"], context)
+            submatches.setdefault(score, []).append(item)
+        max_ = sorted(submatches.keys())[-1]
+        if len(submatches[max_]) == 1:
+            return submatches[max_][0]["id"]
 
 def get_metadata(source):
     """
