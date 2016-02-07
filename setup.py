@@ -38,7 +38,6 @@ import sh
 # ------------------------------------------------------------------------------
 
 sys.path.insert(0, local("about"))
-print sys.path
 import about
 import about.about
 
