@@ -3,75 +3,34 @@
 
 # Python 2.7 Standard Library
 import ConfigParser
+import distutils.spawn
 import importlib
 import inspect
 import os.path
 import pydoc
 import re
+import subprocess
 import sys
+import StringIO
 import types
 
 # Third-Party Libraries
-import difflib
 import pkg_resources
-import setuptools
-import sh
+
 
 # Metadata
 # ------------------------------------------------------------------------------
-__main__ = (__name__ == "__main__") # we are about to override __name__.
-
 from .about import *
 
-# ReStructuredText Generation Support
+# ReStructuredText Support
 # ------------------------------------------------------------------------------
-
-# Setuptools monkey-patching
-setuptools.Distribution.global_options.append(
-  ("rest", "r", "generate ReST README")
-)
-
-def rest_generation_required():
-    # We sort of assume here that we are being called from a setup.py.
-    # To be safe, we should CHECK that in get_metadata and generate
-    # an error otherwise.
-    REST = False
-    if "-r" in sys.argv:
-        sys.argv.remove("-r")
-        REST = True
-    elif "--rest" in sys.argv:
-        sys.argv.remove("--rest")
-        REST = True
-    elif os.path.isfile("setup.cfg"):
-        parser = ConfigParser.RawConfigParser()
-        parser.read("setup.cfg")
-        try: 
-            REST = trueish(parser.get("about", "rest"))
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            pass
-    return REST
-
-def generate_rest_readme(filename):
-    readme = filename
-    readme_rst = filename + ".rst"
-    try:
-        _ = sh.pandoc
-    except sh.CommandNotFound:
-        error = "cannot find pandoc to generate ReST documentation."
-        raise ImportError(error)
-    sh.pandoc("-o", readme_rst, readme) 
-
-def trueish(value):
-    if not isinstance(value, str):
-        return bool(value)
-    else:
-        value = value.lower()
-        if value in ("y", "yes", "t", "true", "on", "1"):
-            return True
-        elif value in ("", "n", "no", "f", "false", "off", "0"):
-            return False
-        else:
-            raise TypeError("invalid bool value {0!r}, use 'true' or 'false'.")
+def to_rst(markdown):
+    pandoc = distutils.spawn.find_executable("pandoc")
+    if pandoc:
+        args = [pandoc, "-f", "markdown", "-t", "rst"]
+        p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.stdin.write(markdown)
+        return p.communicate()[0]
 
 # Generation of Metadata for Setuptools
 # ------------------------------------------------------------------------------
@@ -170,27 +129,25 @@ def get_metadata(source):
     if summary is not None:
         setuptools_kwargs["description"] = summary
 
-    # Get and process the module README, 
-    # under the assumption that `__readme__` is the name of a markdown file.
-    readme = metadata.get("__readme__")
-    if readme is not None:
-        if rest_generation_required():
-            generate_rest_readme(filename=readme)
-        if os.path.exists(readme + ".rst"):
-            setuptools_kwargs["long_description"] = open(readme + ".rst").read()
- 
-    # TODO: add license info from license field and dvlpt status from version.
-    # Process trove classifiers.
+    # Get and process the module README.
+    README_filenames = ["README.md", "README.txt", "README"]
+    for filename in README_filenames:
+        if os.path.isfile(filename):
+            README = open(filename).read()
+            README_rst = to_rst(README)
+            setuptools_kwargs["long_description"] = README_rst or README
+            break
+
+    # TODO: add license info from license field and dvlpt status from version ?
+
+    # Process keywords that match trove classifiers.
     keywords = metadata.get("__keywords__")
     if keywords is not None:
         classifiers = []
         keywords = [k.strip() for k in keywords.split(",")]
         for keyword in keywords:
             trove_id = trove_search(keyword)
-            if trove_id is None:
-                error = "ambiguous keyword: {keyword!r}"
-                raise ValueError(error.format(keyword=keyword))
-            else:
+            if trove_id is not None:
                 classifiers.append(trove_id)
         classifiers = sorted(list(set(classifiers)))
         setuptools_kwargs["classifiers"] = classifiers
