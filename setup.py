@@ -45,7 +45,7 @@ info = dict(
   metadata     = about.get_metadata(about.about),
   code         = dict(packages = setuptools.find_packages()),
   data         = dict(data_files = [("", ["README.md"])]),
-  requirements = dict(install_requires=["setuptools", "sh"]), 
+  requirements = dict(install_requires=["setuptools"]), 
   scripts      = {},
   plugins      = {},
   tests        = {},
