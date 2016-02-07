@@ -53,7 +53,7 @@ This file contains the metadata (and a little boilerplate):
 `about.about` module. If we include in the `about/__init__.py` file the 
 one-liner
     
-    from about.about import *
+    from .about import *
 
 they become available in the top-level module:
 
