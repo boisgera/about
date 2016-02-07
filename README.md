@@ -30,7 +30,7 @@ This file contains the metadata (and a little boilerplate):
       __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
       __url__         = "https://warehouse.python.org/project/about",
       __summary__     = "Software Metadata for Humans",
-      __keywords__    = "python/2.7, OS independent, software development, alpha",
+      __keywords__    = "Python / 2.7, OS independent, software development, alpha",
     )
 
     globals().update(metadata)
