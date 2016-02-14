@@ -2,33 +2,25 @@
 # coding: utf-8
 
 # Python 2.7 Standard Library
-import ConfigParser
-import distutils.spawn
-import importlib
-import inspect
 import os.path
-import pydoc
 import re
 import subprocess
-import sys
-import StringIO
 import types
 
 # Third-Party Libraries
 import pkg_resources
 
-
-# Metadata
-# ------------------------------------------------------------------------------
+# About Metadata
 from .about import *
 
-# ReStructuredText Support
+# Markdown to ReStructuredText
 # ------------------------------------------------------------------------------
 def to_rst(markdown):
     pandoc = distutils.spawn.find_executable("pandoc")
     if pandoc:
         args = [pandoc, "-f", "markdown", "-t", "rst"]
-        p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        options = {"stdin":subprocess.PIPE, "stdout":subprocess.PIPE}
+        p = subprocess.Popen(args, **options)
         p.stdin.write(markdown)
         return p.communicate()[0]
 
@@ -136,8 +128,6 @@ def get_metadata(source):
             README_rst = to_rst(README)
             setuptools_kwargs["long_description"] = README_rst or README
             break
-
-    # TODO: add license info from license field and dvlpt status from version ?
 
     # Process keywords that match trove classifiers.
     keywords = metadata.get("__keywords__")

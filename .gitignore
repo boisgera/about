@@ -1,13 +1,9 @@
-
 *~
 *.bak
-
-*.pyc
 *.egg-info
-
-README.md.rst
+*.pyc
 
 build
 dist
-lib
+sandbox
 

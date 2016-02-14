@@ -19,23 +19,6 @@ except ImportError:
 def local(path):
     return os.path.join(os.path.dirname(__file__), path)
 
-# Extra Third-Party Libraries
-sys.path.insert(0, local(".lib"))
-setup_requires = ["about>=5"]
-for req in setup_requires:
-    try:
-        require = lambda *r: pkg_resources.WorkingSet().require(*r)
-        require(req)
-
-    except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
-        error = """{req!r} not found; install it locally with:
-
-    pip install --target=.lib --ignore-installed {req!r}"""
-        raise ImportError(error.format(req=req))
-import about
-
-# ------------------------------------------------------------------------------
-
 sys.path.insert(0, local("about"))
 import about
 import about.about
