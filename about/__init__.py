@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # Python 2.7 Standard Library
+import distutils
 import os.path
 import re
 import subprocess
