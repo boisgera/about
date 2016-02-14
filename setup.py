@@ -3,8 +3,6 @@
 # Python 2.7 Standard Library
 import ConfigParser
 import os
-import os.path
-import shutil
 import sys
 
 # Pip Package Manager
@@ -16,10 +14,7 @@ except ImportError:
     error = "pip is not installed, refer to <{url}> for instructions."
     raise ImportError(error.format(url="http://pip.readthedocs.org"))
 
-def local(path):
-    return os.path.join(os.path.dirname(__file__), path)
-
-sys.path.insert(0, local("about"))
+sys.path.insert(0, os.getcwd())
 import about
 import about.about
 
