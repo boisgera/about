@@ -25,7 +25,7 @@ This file contains the metadata (and a little boilerplate):
 
     metadata = dict(
       __name__        = "about",
-      __version__     = "5.1",
+      __version__     = "5.1.1",
       __license__     = "MIT License",  
       __author__      = u"Sébastien Boisgérault <Sebastien.Boisgerault@gmail.com>",
       __url__         = "https://warehouse.python.org/project/about",
@@ -62,7 +62,7 @@ they become available in the top-level module:
     >>> print about.__name__
     about
     >>> print about.__version__
-    5.0.0
+    5.1.1
     >>> print about.__license__
     MIT License
 
