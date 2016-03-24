@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Python 2.7 Standard Library
-import ConfigParser
+from __future__ import absolute_import
 import os
 import sys
 

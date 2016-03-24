@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # Python 2.7 Standard Library
+from __future__ import absolute_import
 import distutils
 import os.path
 import re
@@ -22,8 +23,8 @@ def to_rst(markdown):
         args = [pandoc, "-f", "markdown", "-t", "rst"]
         options = {"stdin":subprocess.PIPE, "stdout":subprocess.PIPE}
         p = subprocess.Popen(args, **options)
-        p.stdin.write(markdown)
-        return p.communicate()[0]
+        p.stdin.write(markdown.encode("utf-8"))
+        return p.communicate()[0].decode("utf-8")
 
 # Generation of Metadata for Setuptools
 # ------------------------------------------------------------------------------
@@ -41,8 +42,10 @@ def generate_trove():
         trove = []
         load = pkg_resources.resource_string
         trove_text = load("about", "Trove-classifiers.txt")
+        if hasattr(trove_text, "decode"):
+            trove_text = trove_text.decode("utf-8")
         for trove_id in trove_text.splitlines():
-            parts = trove_id.split(" :: ")
+            parts = trove_id.split(u" :: ")
             context = clean(" ".join(parts[:-1])).split()
             name = clean(parts[-1]).split()
             trove.append({"id": trove_id, "name": name, "context": context})
@@ -54,7 +57,7 @@ def match_score(items, ref_items, trove=trove):
 
 def trove_search(keyword):
     generate_trove()
-    parts = [p.strip().lower() for p in keyword.split("/")]
+    parts = [p.strip().lower() for p in keyword.split(u"/")]
     try:
         name = parts[-1].split() 
         if len(parts) == 2:
@@ -62,7 +65,7 @@ def trove_search(keyword):
         else:
             context = None
     except:
-        error = "Invalid keyword {keyword!r}"
+        error = u"Invalid keyword {keyword!r}"
         raise ValueError(error.format(keyword=keyword))
     matches = {}
     for item in trove:
@@ -107,12 +110,11 @@ def get_metadata(source):
     # Search for author email with a <...@...> syntax in the author field.
     author = metadata.get("__author__")
     if author is not None:
-        author = author.encode("utf-8")
-        email_pattern = r"<([^>]+@[^>]+)>"
+        email_pattern = u"<([^>]+@[^>]+)>"
         match = re.search(email_pattern, author)
         if match is not None:
             setuptools_kwargs["author_email"] = email = match.groups()[0]
-            setuptools_kwargs["author"] = author.replace("<" + email + ">", "").strip()
+            setuptools_kwargs["author"] = author.replace(u"<" + email + u">", u"").strip()
         else:
             setuptools_kwargs["author"] = author
 
@@ -126,6 +128,8 @@ def get_metadata(source):
     for filename in README_filenames:
         if os.path.isfile(filename):
             README = open(filename).read()
+            if hasattr(README, "decode"):
+                README = README.decode("utf-8")
             README_rst = to_rst(README)
             setuptools_kwargs["long_description"] = README_rst or README
             break
